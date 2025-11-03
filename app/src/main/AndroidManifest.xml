@@ -21,6 +21,29 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".MyKisahActivity" />
+        <activity android:name=".AddNovelActivity" />
+
+        <activity
+            android:name=".NovelDetailActivity"
+            android:parentActivityName=".MyKisahActivity" />
+
+        <activity
+            android:name=".CharacterListActivity"
+            android:parentActivityName=".NovelDetailActivity" />
+
+        <activity
+            android:name=".ChapterEditorActivity"
+            android:parentActivityName=".NovelDetailActivity" />
+
+        <activity
+            android:name=".NovelSettingsActivity"
+            android:parentActivityName=".NovelDetailActivity" />
+
+        <activity
+            android:name=".CharacterEditorActivity"
+            android:parentActivityName=".CharacterListActivity" />
     </application>
+
 
 </manifest>

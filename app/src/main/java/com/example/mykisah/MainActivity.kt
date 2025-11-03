@@ -1,5 +1,6 @@
 package com.example.mykisah
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -35,10 +36,20 @@ class MainActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+
         }
+
 
         credentialManager = CredentialManager.create(this)
         auth = Firebase.auth
+
+        if (auth.currentUser != null) {
+            // Jika sudah, langsung pindah ke homepage
+            val intent = Intent(this, MyKisahActivity::class.java)
+            startActivity(intent)
+            finish() // Tutup MainActivity
+            return   // Hentikan eksekusi sisa onCreate
+        }
 
         // 4. Daftarkan event yang diperlukan
         registerEvent()
@@ -87,7 +98,11 @@ class MainActivity : AppCompatActivity() {
             .addOnCompleteListener(this) {task ->
                 if (task.isSuccessful) {
                     Toast.makeText(this, "Login Berhasil", Toast.LENGTH_LONG).show()
-                    //toMymyPage()
+                    // 2. TAMBAHKAN KODE INI UNTUK PINDAH HALAMAN
+                    val intent = Intent(this, MyKisahActivity::class.java)
+                    startActivity(intent)
+                    finish() // Menutup halaman login agar tidak bisa kembali
+                    // ============================================
                 } else {
                     Toast.makeText(this, "Login Gagal", Toast.LENGTH_SHORT).show()
                 }

@@ -53,16 +53,19 @@ dependencies {
     // Import the BoM for the Firebase platform
     implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
 
-    // Add the dependency for the Firebase Authentication library
-    // When using the BoM, you don't specify versions in Firebase library dependencies
+    // 2. Gunakan ini (NON-KTX, seperti project Anda yang berhasil)
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
 
     // Also add the dependencies for the Credential Manager libraries and specify their versions
     implementation("androidx.credentials:credentials:1.3.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
-    // Declare the dependency for the Cloud Firestore library
-    // When using the BoM, you don't specify versions in Firebase library dependencies
-    implementation("com.google.firebase:firebase-firestore")
+// TAMBAHKAN JUGA INI (untuk menggantikan fungsi .await()):
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1") // Cek versi terbaru
+// ViewModel & LiveData (Lifecycle)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.3") // Cek versi terbaru
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
+    implementation("androidx.activity:activity-ktx:1.9.0")
 }

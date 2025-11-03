@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "67919967995-g91pq79nubu657cb78i3d5ueqqn79qju.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mykisah",
+            "certificate_hash": "4c88b099a05428ffb1d4dbf126d803ce5c66416c"
+          }
+        },
+        {
           "client_id": "67919967995-jglu4suiia6qme4s5van5ncgjtstmgci.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
