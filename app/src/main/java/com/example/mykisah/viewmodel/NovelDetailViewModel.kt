@@ -1,4 +1,4 @@
-package com.example.mykisah.usecase
+package com.example.mykisah.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -57,13 +57,11 @@
                         android:textAppearance="?attr/textAppearanceBody2" />
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_character_list"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                        android:id="@+id/btn_open_wiki" style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:text="Daftar Karakter"
-                        app:icon="@drawable/ic_baseline_people_24" />
+                        android:text="Buka World-Building Wiki" app:icon="@drawable/ic_baseline_menu_book_24" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

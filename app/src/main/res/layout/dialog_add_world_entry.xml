@@ -8,32 +8,49 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Karakter Baru"
+        android:text="Entri Wiki Baru"
         android:textAppearance="?attr/textAppearanceHeadline6" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp">
+        android:layout_marginTop="16dp"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/et_character_name"
+            android:id="@+id/et_entry_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Nama Karakter"
+            android:hint="Nama Entri (Mis: Kerajaan Astina)"
             android:inputType="textCapWords"/>
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="8dp"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/et_character_desc"
+        <AutoCompleteTextView
+            android:id="@+id/ac_entry_category"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Deskripsi singkat/bio"
+            android:hint="Kategori (Mis: Kerajaan)"
+            android:inputType="textCapWords"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_entry_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Deskripsi singkat..."
             android:gravity="top"
             android:inputType="textMultiLine|textCapSentences"
             android:lines="4" />

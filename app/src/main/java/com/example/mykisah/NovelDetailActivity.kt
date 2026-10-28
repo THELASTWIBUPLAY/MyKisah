@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mykisah.adapter.ChapterAdapter
 import com.example.mykisah.databinding.ActivityNovelDetailBinding // Gunakan binding ini
 import com.example.mykisah.databinding.DialogAddChapterBinding
-import com.example.mykisah.usecase.NovelDetailViewModel
+import com.example.mykisah.viewmodel.NovelDetailViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -106,9 +106,9 @@ class NovelDetailActivity : AppCompatActivity() {
         }
 
         // Tombol List Karakter
-        binding.btnCharacterList.setOnClickListener {
-            val intent = Intent(this, CharacterListActivity::class.java)
-            intent.putExtra(CharacterListActivity.EXTRA_NOVEL_ID, currentNovelId)
+        binding.btnOpenWiki.setOnClickListener {
+            val intent = Intent(this, WorldBrowserActivity::class.java)
+            intent.putExtra(WorldBrowserActivity.EXTRA_NOVEL_ID, currentNovelId)
             startActivity(intent)
         }
     }

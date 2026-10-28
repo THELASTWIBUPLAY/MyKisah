@@ -41,8 +41,12 @@
             android:parentActivityName=".NovelDetailActivity" />
 
         <activity
-            android:name=".CharacterEditorActivity"
-            android:parentActivityName=".CharacterListActivity" />
+            android:name=".WorldBrowserActivity"
+            android:parentActivityName=".NovelDetailActivity" />
+
+        <activity
+            android:name=".WorldEntryEditorActivity"
+            android:parentActivityName=".WorldBrowserActivity" />
     </application>
 
 
