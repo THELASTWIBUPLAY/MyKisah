@@ -5,5 +5,7 @@ data class MyChapter(
     val novelId: String = "", // Untuk menautkan ke novel
     val title: String = "",
     val content: String = "", // Isi dari chapter
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    var userId: String = "", // Pemilik chapter
+    val updatedAt: Long = 0L // Waktu terakhir diperbarui (untuk deteksi konflik)
 )

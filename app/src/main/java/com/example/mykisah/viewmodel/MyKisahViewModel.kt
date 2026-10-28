@@ -63,6 +63,16 @@ class MyKisahViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Migrasi satu kali: beri tanda kepemilikan (userId) ke data lama yang belum punya.
+     * Dipanggil dari MyKisahActivity sebelum daftar novel dimuat.
+     */
+    fun backfillOwnership() {
+        viewModelScope.launch {
+            repository.backfillOwnership()
+        }
+    }
+
     // 6. TAMBAHKAN FUNGSI BARU INI untuk di panggil dari search bar
     fun setSearchQuery(query: String) {
         _searchQuery.value = query

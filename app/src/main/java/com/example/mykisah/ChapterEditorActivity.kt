@@ -18,7 +18,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.mykisah.databinding.ActivityChapterEditorBinding
-import com.example.mykisah.repository.ChapterDraftStore
+import com.example.mykisah.repository.DraftStore
 import com.example.mykisah.viewmodel.ChapterEditorViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Job
@@ -50,7 +50,7 @@ class ChapterEditorActivity : AppCompatActivity() {
     private var autoSaveJob: Job? = null
     private var isDirty = false // ada perubahan yang belum tersimpan?
     private var isFormatting = false // sedang menyorot tag wiki?
-    private lateinit var draftStore: ChapterDraftStore
+    private lateinit var draftStore: DraftStore
     private val saveTimeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,7 +60,7 @@ class ChapterEditorActivity : AppCompatActivity() {
 
         // Draft lokal: jaring pengaman supaya ketikan tidak pernah hilang
         // walau penulisan ke Firestore gagal.
-        draftStore = ChapterDraftStore(this)
+        draftStore = DraftStore(this, scope = "chapter")
 
         // 1. Ambil Chapter ID
         currentChapterId = intent.getStringExtra(EXTRA_CHAPTER_ID)
@@ -159,8 +159,8 @@ class ChapterEditorActivity : AppCompatActivity() {
 
                     // Draft lokal hanya ada kalau simpan ke Firestore belum terkonfirmasi.
                     val draft = draftStore.load(chapterId)
-                    val title = draft?.title?.takeIf { it.isNotBlank() } ?: chapter.title
-                    val content = draft?.content ?: chapter.content
+                    val title = draft?.get("title")?.takeIf { it.isNotBlank() } ?: chapter.title
+                    val content = draft?.get("content") ?: chapter.content
 
                     binding.etChapterTitle.setText(title)
                     binding.etChapterContent.setText(content)
@@ -232,9 +232,11 @@ class ChapterEditorActivity : AppCompatActivity() {
         if (!hasLoadedInitialData) return
 
         draftStore.save(
-            chapterId = chapterId,
-            title = binding.etChapterTitle.text.toString(),
-            content = binding.etChapterContent.text.toString()
+            itemId = chapterId,
+            fields = mapOf(
+                "title" to binding.etChapterTitle.text.toString(),
+                "content" to binding.etChapterContent.text.toString()
+            )
         )
     }
 

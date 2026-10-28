@@ -15,6 +15,7 @@ import com.example.mykisah.adapter.NovelAdapter
 import com.example.mykisah.databinding.HomepageMykisahBinding
 import com.example.mykisah.viewmodel.MyKisahViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -46,7 +47,18 @@ class MyKisahActivity : AppCompatActivity(), SearchView.OnQueryTextListener {
             startActivity(intent)
         }
 
-        observeNovels()
+        // Beri tanda kepemilikan (userId) ke data lama sebelum daftar novel dimuat.
+        // Data lama dibuat sebelum fitur multi-user ada, jadi belum punya pemilik.
+        // Aman: hanya menambah field, konten tidak diubah.
+        val uid = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+        if (uid.isEmpty()) {
+            observeNovels()
+        } else {
+            lifecycleScope.launch {
+                viewModel.backfillOwnership()
+                observeNovels()
+            }
+        }
     }
 
     private fun setupRecyclerView() {

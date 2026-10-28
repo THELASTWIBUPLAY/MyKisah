@@ -16,5 +16,7 @@ data class WorldEntry(
     // INI UNTUK SISTEM TAGS ANDA
     val tags: List<String> = emptyList(),
 
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    var userId: String = "", // Pemilik entri
+    val updatedAt: Long = 0L // Waktu terakhir diperbarui (untuk deteksi konflik)
 )

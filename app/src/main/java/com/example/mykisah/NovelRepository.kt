@@ -5,6 +5,8 @@ import com.example.mykisah.entity.MyChapter
 import com.example.mykisah.entity.MyNovel
 import com.example.mykisah.entity.WorldEntry
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.snapshots
@@ -13,7 +15,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 
-class NovelRepository {
+class NovelRepository(
+    // Pemilik data. Diambil dari akun Google yang sedang login.
+    // Default param ini membuat semua pemanggil lama tetap berfungsi.
+    private val userId: String = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+) {
 
     // KEMBALIKAN KE VERSI KTX
     private val novelCollection = Firebase.firestore.collection("novels")
@@ -22,14 +28,16 @@ class NovelRepository {
 
     fun getAllNovels(): Flow<List<MyNovel>> {
         return novelCollection
-            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .whereEqualTo("userId", userId)
             .snapshots() // <-- KTX Flow
             .map { querySnapshot ->
+                // Sortir di sisi klien: kombinasi whereEqualTo + orderBy memerlukan
+                // composite index di console, ini menghindari setup tambahan.
                 querySnapshot.documents.mapNotNull { document ->
                     val novel = document.toObject(MyNovel::class.java)
                     novel?.id = document.id
                     novel
-                }
+                }.sortedByDescending { it.timestamp }
             }
     }
 
@@ -83,16 +91,23 @@ class NovelRepository {
     // --- FUNGSI CREATE, UPDATE, DELETE (Semua .await() sudah KTX-ready) ---
 
     suspend fun addNovel(novel: MyNovel) {
-        try { novelCollection.add(novel).await() }
+        try {
+            novel.userId = userId
+            novelCollection.add(novel).await()
+        }
         catch (e: Exception) { e.printStackTrace() }
     }
     suspend fun addChapter(chapter: MyChapter) {
-        try { chapterCollection.add(chapter).await() }
+        try {
+            chapter.userId = userId
+            chapterCollection.add(chapter).await()
+        }
         catch (e: Exception) { e.printStackTrace() }
     }
 
     suspend fun addWorldEntry(entry: WorldEntry) {
         try {
+            entry.userId = userId
             worldEntryCollection.add(entry).await()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -106,7 +121,13 @@ class NovelRepository {
     suspend fun updateChapter(chapterId: String, newTitle: String, newContent: String): Boolean {
         return try {
             chapterCollection.document(chapterId)
-                .update(mapOf("title" to newTitle, "content" to newContent))
+                .update(
+                    mapOf(
+                        "title" to newTitle,
+                        "content" to newContent,
+                        "updatedAt" to System.currentTimeMillis()
+                    )
+                )
                 .await()
             true
         } catch (e: Exception) {
@@ -122,20 +143,51 @@ class NovelRepository {
         newName: String,
         newCategory: String,
         newDescription: String,
-        newTags: List<String> // <-- Kita tambahkan tags di sini
-    ) {
-        try {
+        newTags: List<String>
+    ): Boolean {
+        return try {
             worldEntryCollection.document(entryId)
                 .update(
                     mapOf(
                         "name" to newName,
                         "category" to newCategory,
                         "description" to newDescription,
-                        "tags" to newTags // <-- Simpan list of tags
+                        "tags" to newTags, // <-- Simpan list of tags
+                        "updatedAt" to System.currentTimeMillis()
                     )
                 ).await()
+            true
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Gagal menyimpan entri $entryId", e)
+            false
+        }
+    }
+
+    /**
+     * Migrasi data lama: isi [userId] ke semua dokumen yang belum punya pemilik.
+     *
+     * Dijalankan sekali oleh aplikasi baru saat dibuka, jadi data yang dibuat
+     * sebelum fitur ini ada tetap bisa dilihat. Hanya MENAMBAH field, tidak
+     * menghapus/mengubah konten apa pun, jadi aman untuk build lama.
+     */
+    suspend fun backfillOwnership() {
+        if (userId.isEmpty()) return
+        backfillCollection(novelCollection, "novels")
+        backfillCollection(chapterCollection, "chapters")
+        backfillCollection(worldEntryCollection, "world_entries")
+    }
+
+    private suspend fun backfillCollection(collection: CollectionReference, label: String) {
+        try {
+            val snapshot = collection.get().await()
+            for (document in snapshot.documents) {
+                val currentOwner = document.data?.get("userId") as? String
+                if (currentOwner.isNullOrEmpty()) {
+                    document.reference.update("userId", userId).await()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Gagal backfill $label", e)
         }
     }
 
