@@ -13,13 +13,17 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.mykisah.databinding.ActivityChapterEditorBinding
+import com.example.mykisah.entity.WorldEntry
 import com.example.mykisah.repository.DraftStore
 import com.example.mykisah.viewmodel.ChapterEditorViewModel
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -52,6 +56,7 @@ class ChapterEditorActivity : AppCompatActivity() {
     private var isFormatting = false // sedang menyorot tag wiki?
     private lateinit var draftStore: DraftStore
     private val saveTimeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+    private val WHITESPACE = Regex("\\s+")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,6 +92,9 @@ class ChapterEditorActivity : AppCompatActivity() {
         // 3. TAMBAHKAN INI:
         // Agar ClickableSpan di dalam EditText bisa di-klik
         binding.etChapterContent.movementMethod = LinkMovementMethod.getInstance()
+
+        // Bar aksesori cepat (Undo/Redo/@/petik/em-dash) di atas keyboard.
+        setupWritingToolbar()
     }
 
     private fun setupToolbar() {
@@ -126,10 +134,9 @@ class ChapterEditorActivity : AppCompatActivity() {
                     // --- Buat Span yang bisa di-klik ---
                     val clickableSpan = object : ClickableSpan() {
                         override fun onClick(widget: View) {
-                            // SAAT DI-KLIK: Buka WorldEntryEditorActivity
-                            val intent = Intent(this@ChapterEditorActivity, WorldEntryEditorActivity::class.java)
-                            intent.putExtra(WorldEntryEditorActivity.EXTRA_ENTRY_ID, entry.id)
-                            startActivity(intent)
+                            // SAAT DI-KLIK: Bukan pindah activity, tapi intip ringkas
+                            // lewat bottom sheet supaya penulis tetap fokus menulis.
+                            showEntryQuickPeek(entry)
                         }
                     }
 
@@ -147,6 +154,24 @@ class ChapterEditorActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    /** Tampilkan ringkasan entri wiki di bottom sheet tanpa meninggalkan editor. */
+    private fun showEntryQuickPeek(entry: WorldEntry) {
+        val peekView = layoutInflater.inflate(R.layout.view_wiki_peek, null)
+        peekView.findViewById<TextView>(R.id.tv_peek_name).text = entry.name
+        peekView.findViewById<TextView>(R.id.tv_peek_category).text = entry.category
+        peekView.findViewById<TextView>(R.id.tv_peek_description).text =
+            entry.description.ifBlank { "Belum ada deskripsi." }
+        peekView.findViewById<Button>(R.id.btn_peek_edit).setOnClickListener {
+            val intent = Intent(this, WorldEntryEditorActivity::class.java)
+            intent.putExtra(WorldEntryEditorActivity.EXTRA_ENTRY_ID, entry.id)
+            startActivity(intent)
+        }
+
+        val bottomSheet = BottomSheetDialog(this)
+        bottomSheet.setContentView(peekView)
+        bottomSheet.show()
     }
 
     // 6. UPDATE 'loadEntryData' di observeViewModel
@@ -204,6 +229,8 @@ class ChapterEditorActivity : AppCompatActivity() {
 
             override fun afterTextChanged(s: Editable?) {
                 if (s == null || isFormatting) return
+
+                updateWordCount()
 
                 // Catatan: listener TIDAK dilepas-pasang lagi. Dulu listener dilepas lalu
                 // dipasang lagi di akhir fungsi; kalau salah satu langkah di tengah melempar
@@ -293,6 +320,58 @@ class ChapterEditorActivity : AppCompatActivity() {
 
     private fun setSaveStatus(text: String) {
         binding.toolbar.subtitle = text
+    }
+
+    /** Bar aksesori cepat untuk para penulis. */
+    private fun setupWritingToolbar() {
+        binding.btnUndo.setOnClickListener { undo() }
+        binding.btnRedo.setOnClickListener { redo() }
+        binding.btnInsertMention.setOnClickListener { insertAtCursor("@") }
+        binding.btnInsertQuote.setOnClickListener { insertQuotePair() }
+        binding.btnInsertDash.setOnClickListener { insertAtCursor("\u2014") }
+    }
+
+    private fun undo() {
+        runCatching {
+            binding.etChapterContent.onTextContextMenuItem(android.R.id.undo)
+        }.onFailure { Log.w(TAG, "Undo gagal", it) }
+    }
+
+    private fun redo() {
+        runCatching {
+            binding.etChapterContent.onTextContextMenuItem(android.R.id.redo)
+        }.onFailure { Log.w(TAG, "Redo gagal", it) }
+    }
+
+    /** Sisipkan teks di posisi kursor lalu letakkan kursor setelah teks. */
+    private fun insertAtCursor(text: String) {
+        val editor = binding.etChapterContent
+        val editable = editor.text ?: return
+        val cursor = editor.selectionStart.coerceIn(0, editable.length)
+        editable.insert(cursor, text)
+        editor.setSelection(cursor + text.length)
+    }
+
+    /** Sisipkan tanda petik “” lalu taruh kursor di antara keduanya. */
+    private fun insertQuotePair() {
+        val editor = binding.etChapterContent
+        val editable = editor.text ?: return
+        val cursor = editor.selectionStart.coerceIn(0, editable.length)
+        editable.insert(cursor, "\u201C\u201D")
+        editor.setSelection(cursor + 1)
+    }
+
+    /** Hitung kata (tanpa markup wiki) dan estimasi waktu baca. */
+    private fun updateWordCount() {
+        val text = binding.etChapterContent.text?.toString().orEmpty()
+        val plain = WIKI_TAG_PATTERN.matcher(text).replaceAll("")
+        val words = plain.trim().split(WHITESPACE).filter { it.isNotBlank() }.count()
+        val minutes = if (words == 0) 0 else (words + READING_WPM - 1) / READING_WPM
+        binding.tvWordCount.text = if (minutes > 0) {
+            "$words kata · $minutes mnt baca"
+        } else {
+            "$words kata"
+        }
     }
 
     /** Sorot tag wiki tanpa pernah membiarkan kegagalan formatting menghentikan auto-save. */
@@ -434,6 +513,7 @@ class ChapterEditorActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_CHAPTER_ID = "EXTRA_CHAPTER_ID"
         private const val AUTO_SAVE_DEBOUNCE_MS = 800L
+        private const val READING_WPM = 200
         private const val TAG = "ChapterEditor"
     }
 }

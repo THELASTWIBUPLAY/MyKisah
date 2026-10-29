@@ -29,12 +29,9 @@
             android:parentActivityName=".MyKisahActivity" />
 
         <activity
-            android:name=".CharacterListActivity"
-            android:parentActivityName=".NovelDetailActivity" />
-
-        <activity
             android:name=".ChapterEditorActivity"
-            android:parentActivityName=".NovelDetailActivity" />
+            android:parentActivityName=".NovelDetailActivity"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".NovelSettingsActivity"
