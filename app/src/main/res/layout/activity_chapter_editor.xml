@@ -20,6 +20,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/editor_scroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
@@ -69,6 +70,40 @@
                 android:textAppearance="?attr/textAppearanceCaption"
                 android:textColor="?android:attr/textColorSecondary"
                 tools:text="0 kata" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/preview_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/tv_preview_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceHeadline5"
+                android:textStyle="bold"
+                tools:text="Judul Chapter" />
+
+            <TextView
+                android:id="@+id/tv_preview_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:lineSpacingExtra="6dp"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                android:textIsSelectable="true"
+                tools:text="Isi cerita tampil rapi di sini." />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

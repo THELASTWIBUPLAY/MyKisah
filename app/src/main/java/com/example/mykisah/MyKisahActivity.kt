@@ -3,9 +3,11 @@ package com.example.mykisah
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu // <-- 1. IMPORT INI
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView // <-- 2. IMPORT INI
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -119,6 +121,30 @@ class MyKisahActivity : AppCompatActivity(), SearchView.OnQueryTextListener {
         searchView.setOnQueryTextListener(this)
 
         return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_toggle_dark -> {
+                toggleDarkMode()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun toggleDarkMode() {
+        val prefs = getSharedPreferences(MyKisahApp.PREFS_NAME, MODE_PRIVATE)
+        val current = prefs.getString(MyKisahApp.KEY_NIGHT_MODE, MyKisahApp.VALUE_SYSTEM)
+        val next = if (current == MyKisahApp.VALUE_YES) MyKisahApp.VALUE_NO else MyKisahApp.VALUE_YES
+        prefs.edit().putString(MyKisahApp.KEY_NIGHT_MODE, next).apply()
+
+        val mode = if (next == MyKisahApp.VALUE_YES) {
+            AppCompatDelegate.MODE_NIGHT_YES
+        } else {
+            AppCompatDelegate.MODE_NIGHT_NO
+        }
+        AppCompatDelegate.setDefaultNightMode(mode)
     }
 
     // Dipanggil saat user menekan 'Enter'

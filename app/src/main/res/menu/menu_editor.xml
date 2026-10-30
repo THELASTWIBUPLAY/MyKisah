@@ -3,8 +3,35 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_prev_chapter"
+        android:title="Bab sebelumnya"
+        android:icon="@drawable/ic_baseline_chevron_left_24"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_next_chapter"
+        android:title="Bab berikutnya"
+        android:icon="@drawable/ic_baseline_chevron_right_24"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_save"
         android:title="Simpan"
         android:icon="@drawable/ic_baseline_save_24"
         app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_preview"
+        android:title="Pratinjau"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_find_replace"
+        android:title="Cari &amp; Ganti"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_toggle_status"
+        android:title="Tandai Selesai"
+        app:showAsAction="never" />
 </menu>

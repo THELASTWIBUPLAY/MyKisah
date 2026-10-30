@@ -24,6 +24,15 @@
         tools:text="Kerajaan" />
 
     <TextView
+        android:id="@+id/tv_peek_mentions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textAppearance="?attr/textAppearanceCaption"
+        android:textColor="?android:attr/textColorSecondary"
+        tools:text="Disebut di 3 chapter · 1 entri" />
+
+    <TextView
         android:id="@+id/tv_peek_description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

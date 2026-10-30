@@ -138,6 +138,23 @@ class NovelRepository(
         }
     }
 
+    suspend fun setChapterStatus(chapterId: String, status: String): Boolean {
+        return try {
+            chapterCollection.document(chapterId)
+                .update(
+                    mapOf(
+                        "status" to status,
+                        "updatedAt" to System.currentTimeMillis()
+                    )
+                )
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Gagal ubah status chapter $chapterId", e)
+            false
+        }
+    }
+
     suspend fun updateWorldEntry(
         entryId: String,
         newName: String,

@@ -1,10 +1,12 @@
 package com.example.mykisah.adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.mykisah.R
 import com.example.mykisah.databinding.ItemChapterBinding // Pastikan import binding ini benar
 import com.example.mykisah.entity.MyChapter
 
@@ -18,7 +20,15 @@ class ChapterAdapter(
 
         fun bind(chapter: MyChapter) {
             binding.tvChapterTitle.text = chapter.title
-            // Anda bisa tambahkan info lain di sini jika ada di layout
+
+            val isDone = chapter.status == "done"
+            binding.tvChapterStatus.text = if (isDone) "Selesai" else "Draft"
+            binding.tvChapterStatus.setBackgroundResource(
+                if (isDone) R.drawable.bg_chapter_status_done else R.drawable.bg_chapter_status_draft
+            )
+            binding.tvChapterStatus.setTextColor(
+                if (isDone) Color.parseColor("#0B3D20") else Color.parseColor("#664D03")
+            )
         }
     }
 

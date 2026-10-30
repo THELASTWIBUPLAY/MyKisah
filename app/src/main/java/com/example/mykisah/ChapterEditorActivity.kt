@@ -14,6 +14,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -54,6 +55,8 @@ class ChapterEditorActivity : AppCompatActivity() {
     private var autoSaveJob: Job? = null
     private var isDirty = false // ada perubahan yang belum tersimpan?
     private var isFormatting = false // sedang menyorot tag wiki?
+    private var isPreviewing = false // sedang melihat pratinjau baca?
+    private var currentStatus = "draft" // status bab: draft / selesai
     private lateinit var draftStore: DraftStore
     private val saveTimeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     private val WHITESPACE = Regex("\\s+")
@@ -102,7 +105,7 @@ class ChapterEditorActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
-    private fun highlightWikiTags(s: Editable) {
+    private fun highlightWikiTags(s: Spannable) {
         // Ambil daftar entri TEPAT SAAT INI dari viewmodel
         val entriesMap = viewModel.worldEntries.value.associateBy { it.name }
         if (entriesMap.isEmpty()) return // Tidak ada entri, tidak perlu highlight
@@ -161,6 +164,7 @@ class ChapterEditorActivity : AppCompatActivity() {
         val peekView = layoutInflater.inflate(R.layout.view_wiki_peek, null)
         peekView.findViewById<TextView>(R.id.tv_peek_name).text = entry.name
         peekView.findViewById<TextView>(R.id.tv_peek_category).text = entry.category
+        peekView.findViewById<TextView>(R.id.tv_peek_mentions).text = mentionLabel(entry.name)
         peekView.findViewById<TextView>(R.id.tv_peek_description).text =
             entry.description.ifBlank { "Belum ada deskripsi." }
         peekView.findViewById<Button>(R.id.btn_peek_edit).setOnClickListener {
@@ -191,6 +195,7 @@ class ChapterEditorActivity : AppCompatActivity() {
                     binding.etChapterContent.setText(content)
                     binding.toolbar.title = title
                     hasLoadedInitialData = true
+                    currentStatus = chapter.status
 
                     if (draft != null) {
                         // Ada ketikan yang belum sampai ke Firestore: tampilkan dan kirim ulang.
@@ -453,12 +458,18 @@ class ChapterEditorActivity : AppCompatActivity() {
         editor.setSelection((start + markedUpText.length).coerceIn(0, editable.length))
     }
 
-    // --- Menu Simpan ---
-    // Tombol ini sekarang opsional (auto-save sudah berjalan di background),
-    // tapi tetap dipertahankan untuk simpan instan + langsung keluar.
+    // --- Menu ---
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_editor, menu)
         return true
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        menu?.findItem(R.id.action_toggle_status)?.title =
+            if (currentStatus == "done") "Tandai Draft" else "Tandai Selesai"
+        menu?.findItem(R.id.action_preview)?.title =
+            if (isPreviewing) "Kembali Menulis" else "Pratinjau"
+        return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -467,8 +478,138 @@ class ChapterEditorActivity : AppCompatActivity() {
                 saveChapter()
                 true
             }
+            R.id.action_prev_chapter -> {
+                goToAdjacentChapter(-1)
+                true
+            }
+            R.id.action_next_chapter -> {
+                goToAdjacentChapter(1)
+                true
+            }
+            R.id.action_preview -> {
+                togglePreview()
+                true
+            }
+            R.id.action_find_replace -> {
+                showFindReplaceDialog()
+                true
+            }
+            R.id.action_toggle_status -> {
+                toggleStatus()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    /** Pindah ke bab sebelum/sebelumnya di novel yang sama. */
+    private fun goToAdjacentChapter(direction: Int) {
+        val chapters = viewModel.chapters.value
+        val current = currentChapterId ?: return
+        val index = chapters.indexOfFirst { it.id == current }
+        if (index == -1) return
+
+        val target = index + direction
+        if (target in chapters.indices) {
+            chapters[target].id?.let { openChapter(it) }
+        }
+    }
+
+    private fun openChapter(newChapterId: String) {
+        if (newChapterId == currentChapterId) return
+        flushPendingSave()
+        val intent = Intent(this, ChapterEditorActivity::class.java)
+        intent.putExtra(EXTRA_CHAPTER_ID, newChapterId)
+        startActivity(intent)
+        finish()
+    }
+
+    /** Ganti tampilan editor dengan tampilan baca (tanpa kursor/IME). */
+    private fun togglePreview() {
+        isPreviewing = !isPreviewing
+        if (isPreviewing) {
+            renderPreview()
+            binding.editorScroll.visibility = View.GONE
+            binding.writingToolbar.visibility = View.GONE
+            binding.previewScroll.visibility = View.VISIBLE
+        } else {
+            binding.previewScroll.visibility = View.GONE
+            binding.editorScroll.visibility = View.VISIBLE
+            binding.writingToolbar.visibility = View.VISIBLE
+        }
+        invalidateOptionsMenu()
+    }
+
+    private fun renderPreview() {
+        binding.tvPreviewTitle.text = binding.etChapterTitle.text.toString()
+        val content = binding.etChapterContent.text?.toString().orEmpty()
+        binding.tvPreviewContent.setText(content, TextView.BufferType.SPANNABLE)
+        val spannable = binding.tvPreviewContent.text as? Spannable
+        if (spannable != null) {
+            try {
+                highlightWikiTags(spannable)
+            } catch (e: Exception) {
+                Log.w(TAG, "Gagal render pratinjau", e)
+            }
+            binding.tvPreviewContent.movementMethod = LinkMovementMethod.getInstance()
+        }
+    }
+
+    private fun showFindReplaceDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_find_replace, null)
+        val etFind = dialogView.findViewById<EditText>(R.id.et_find)
+        val etReplace = dialogView.findViewById<EditText>(R.id.et_replace)
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Cari & Ganti")
+            .setView(dialogView)
+            .setNegativeButton("Batal", null)
+            .setPositiveButton("Ganti Semua") { _, _ ->
+                val find = etFind.text.toString()
+                val replace = etReplace.text.toString()
+                if (find.isNotEmpty()) replaceAll(find, replace)
+            }
+            .show()
+    }
+
+    private fun replaceAll(find: String, replace: String) {
+        val editor = binding.etChapterContent
+        val editable = editor.text ?: return
+        val before = editable.toString()
+        val after = before.replace(find, replace)
+        if (after != before) {
+            val cursor = editor.selectionStart.coerceIn(0, after.length)
+            editor.setText(after)
+            editor.setSelection(cursor)
+        }
+    }
+
+    private fun toggleStatus() {
+        val new = if (currentStatus == "done") "draft" else "done"
+        viewModel.setChapterStatus(new) { ok ->
+            Toast.makeText(
+                this,
+                if (ok) (if (new == "done") "Ditandai selesai" else "Ditandai draft")
+                else "Gagal mengubah status",
+                Toast.LENGTH_SHORT
+            ).show()
+            if (ok) {
+                currentStatus = new
+                invalidateOptionsMenu()
+            }
+        }
+    }
+
+    /** Label "disebut di mana" untuk quick peek entri wiki. */
+    private fun mentionLabel(name: String): String {
+        val counts = viewModel.mentionCounts.value
+        val chapterCount = counts.chapters[name] ?: 0
+        val entryCount = counts.entries[name] ?: 0
+        if (chapterCount == 0 && entryCount == 0) return "Belum pernah disebut"
+
+        val parts = mutableListOf<String>()
+        if (chapterCount > 0) parts.add("$chapterCount chapter")
+        if (entryCount > 0) parts.add("$entryCount entri")
+        return "Disebut di " + parts.joinToString(" · ")
     }
 
     private fun saveChapter() {

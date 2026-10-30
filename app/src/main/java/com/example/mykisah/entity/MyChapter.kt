@@ -7,5 +7,6 @@ data class MyChapter(
     val content: String = "", // Isi dari chapter
     val timestamp: Long = System.currentTimeMillis(),
     var userId: String = "", // Pemilik chapter
-    val updatedAt: Long = 0L // Waktu terakhir diperbarui (untuk deteksi konflik)
+    val updatedAt: Long = 0L, // Waktu terakhir diperbarui (untuk deteksi konflik)
+    val status: String = "draft" // "draft" atau "done"
 )

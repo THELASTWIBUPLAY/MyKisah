@@ -8,4 +8,9 @@
         app:showAsAction="ifRoom|collapseActionView"
         app:actionViewClass="androidx.appcompat.widget.SearchView" />
 
+    <item
+        android:id="@+id/action_toggle_dark"
+        android:title="Mode Gelap"
+        app:showAsAction="never" />
+
 </menu>
