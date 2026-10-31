@@ -16,6 +16,10 @@ data class WorldEntry(
     // INI UNTUK SISTEM TAGS ANDA
     val tags: List<String> = emptyList(),
 
+    // Field terstruktur yang menyesuaikan kategori (mis. Peran/Usia untuk Karakter).
+    // Disimpan sebagai peta label -> nilai.
+    val details: Map<String, String> = emptyMap(),
+
     val timestamp: Long = System.currentTimeMillis(),
     var userId: String = "", // Pemilik entri
     val updatedAt: Long = 0L // Waktu terakhir diperbarui (untuk deteksi konflik)

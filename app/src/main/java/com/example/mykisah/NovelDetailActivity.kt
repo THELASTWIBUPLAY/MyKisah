@@ -2,9 +2,12 @@ package com.example.mykisah
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -17,6 +20,7 @@ import com.example.mykisah.viewmodel.NovelDetailViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.util.regex.Pattern
 
 class NovelDetailActivity : AppCompatActivity() {
 
@@ -27,6 +31,8 @@ class NovelDetailActivity : AppCompatActivity() {
 
     private var currentNovelId: String? = null
     private var currentNovelTitle: String? = null
+    private var currentWordGoal = 0
+    private var chaptersSnapshot: List<com.example.mykisah.entity.MyChapter> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,6 +124,8 @@ class NovelDetailActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.novelDetails.collectLatest { novel ->
                 binding.tvNovelSynopsis.text = novel?.synopsis ?: "Memuat sinopsis..."
+                currentWordGoal = novel?.wordGoal ?: 0
+                updateWordProgress()
             }
         }
 
@@ -125,8 +133,92 @@ class NovelDetailActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.chapters.collectLatest { chapters ->
                 chapterAdapter.submitList(chapters)
+                chaptersSnapshot = chapters
+                updateWordProgress()
             }
         }
+    }
+
+    /** Hitung total kata semua bab lalu tampilkan progres terhadap target. */
+    private fun updateWordProgress() {
+        val totalWords = chaptersSnapshot.sumOf { countWords(it.content) }
+        val goal = currentWordGoal
+
+        if (goal > 0) {
+            val percent = ((totalWords * 100L) / goal).toInt().coerceIn(0, 100)
+            binding.tvWordProgress.text =
+                "${formatNumber(totalWords)} kata · target ${formatNumber(goal)} ($percent%)"
+            binding.pbWordProgress.progress = percent
+        } else {
+            binding.tvWordProgress.text = "${formatNumber(totalWords)} kata"
+            binding.pbWordProgress.progress = 0
+        }
+    }
+
+    private fun countWords(text: String): Int {
+        // Buang markup @[Nama] sebelum menghitung kata
+        val plain = text.replace("@[", " ").replace("]", " ")
+        return plain.split(' ', '\n', '\r', '\t').count { it.isNotBlank() }
+    }
+
+    private fun formatNumber(value: Int): String = "%,d".format(value)
+
+    /** Dialog untuk mengatur target jumlah kata novel ini. */
+    private fun showWordGoalDialog() {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER
+            hint = "mis. 50000"
+            setText(if (currentWordGoal > 0) currentWordGoal.toString() else "")
+        }
+
+        val container = FrameLayout(this)
+        val padding = (16 * resources.displayMetrics.density).toInt()
+        container.setPadding(padding, padding / 2, padding, 0)
+        container.addView(input)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Target Jumlah Kata")
+            .setView(container)
+            .setNegativeButton("Batal", null)
+            .setPositiveButton("Simpan") { _, _ ->
+                val goal = input.text.toString().toIntOrNull() ?: 0
+                currentWordGoal = goal
+                updateWordProgress()
+                currentNovelId?.let { viewModel.setWordGoal(it, goal) }
+            }
+            .show()
+    }
+
+    /** Ekspor seluruh novel menjadi teks Markdown lalu bagikan lewat app lain. */
+    private fun shareAsMarkdown() {
+        val chapters = chaptersSnapshot
+        if (chapters.isEmpty()) {
+            Toast.makeText(this, "Belum ada bab untuk dibagikan", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val title = viewModel.novelDetails.value?.title ?: currentNovelTitle ?: "Novel"
+        val synopsis = viewModel.novelDetails.value?.synopsis.orEmpty()
+
+        val builder = StringBuilder()
+        builder.append("# ").append(title).append("\n\n")
+        if (synopsis.isNotBlank()) {
+            builder.append(synopsis).append("\n\n---\n\n")
+        }
+
+        for (chapter in chapters) {
+            builder.append("## ").append(chapter.title).append("\n\n")
+            // Ubah @[Nama] menjadi Nama biasa saat diekspor
+            builder.append(chapter.content.replace("@[", "").replace("]", ""))
+            builder.append("\n\n")
+        }
+
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, title)
+            putExtra(Intent.EXTRA_TEXT, builder.toString())
+        }
+        startActivity(Intent.createChooser(shareIntent, "Bagikan novel"))
     }
 
     private fun showAddChapterDialog() {
@@ -163,6 +255,14 @@ class NovelDetailActivity : AppCompatActivity() {
                 val intent = Intent(this, NovelSettingsActivity::class.java)
                 intent.putExtra(NovelSettingsActivity.EXTRA_NOVEL_ID, currentNovelId)
                 startActivity(intent)
+                true
+            }
+            R.id.action_export -> {
+                shareAsMarkdown()
+                true
+            }
+            R.id.action_word_goal -> {
+                showWordGoalDialog()
                 true
             }
             else -> super.onOptionsItemSelected(item)

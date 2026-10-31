@@ -85,12 +85,27 @@ class WorldEntryEditorActivity : AppCompatActivity() {
                     val category = draft?.get("category") ?: entry.category
                     val description = draft?.get("description") ?: entry.description
                     val tags = draft?.get("tags") ?: entry.tags.joinToString(", ")
+                    val labels = detailLabels(category)
+                    val detailValues = if (draft != null) {
+                        listOf(
+                            draft["detail_1"] ?: "",
+                            draft["detail_2"] ?: "",
+                            draft["detail_3"] ?: ""
+                        )
+                    } else {
+                        listOf(
+                            entry.details[labels[0]] ?: "",
+                            entry.details[labels[1]] ?: "",
+                            entry.details[labels[2]] ?: ""
+                        )
+                    }
 
                     loadEntryData(
                         name = name,
                         category = category,
                         description = description,
-                        tagsString = tags
+                        tagsString = tags,
+                        detailValues = detailValues
                     )
                     hasLoadedInitialData = true
 
@@ -111,13 +126,37 @@ class WorldEntryEditorActivity : AppCompatActivity() {
         name: String,
         category: String,
         description: String,
-        tagsString: String
+        tagsString: String,
+        detailValues: List<String>
     ) {
         binding.etEntryName.setText(name)
         binding.acEntryCategory.setText(category, false) // 'false' agar tidak memicu filter
+        applyDetailHints(category)
+        binding.etDetail1.setText(detailValues.getOrElse(0) { "" })
+        binding.etDetail2.setText(detailValues.getOrElse(1) { "" })
+        binding.etDetail3.setText(detailValues.getOrElse(2) { "" })
         binding.etEntryDescription.setText(description)
         binding.etEntryTags.setText(tagsString)
         binding.toolbar.title = name
+    }
+
+    /** Label field detail sesuai kategori entri. */
+    private fun detailLabels(category: String): List<String> =
+        when (category.trim().lowercase(Locale.getDefault())) {
+            "karakter" -> listOf("Peran", "Usia", "Penampilan")
+            "lokasi" -> listOf("Tipe", "Iklim", "Posisi")
+            "organisasi" -> listOf("Tujuan", "Pemimpin", "Anggota")
+            "kerajaan" -> listOf("Pemimpin", "Wilayah", "Musuh")
+            "item" -> listOf("Asal-usul", "Kekuatan", "Pemilik")
+            "lore" -> listOf("Konteks", "Sumber", "Catatan")
+            else -> listOf("Detail 1", "Detail 2", "Detail 3")
+        }
+
+    private fun applyDetailHints(category: String) {
+        val labels = detailLabels(category)
+        binding.tilDetail1.hint = labels[0]
+        binding.tilDetail2.hint = labels[1]
+        binding.tilDetail3.hint = labels[2]
     }
 
     /** Pasang auto-save di semua kolom entri (nama, kategori, deskripsi, tags). */
@@ -133,6 +172,9 @@ class WorldEntryEditorActivity : AppCompatActivity() {
         binding.acEntryCategory.addTextChangedListener(watcher)
         binding.etEntryDescription.addTextChangedListener(watcher)
         binding.etEntryTags.addTextChangedListener(watcher)
+        binding.etDetail1.addTextChangedListener(watcher)
+        binding.etDetail2.addTextChangedListener(watcher)
+        binding.etDetail3.addTextChangedListener(watcher)
     }
 
     /** Satu titik masuk untuk semua perubahan dari user. */
@@ -140,6 +182,8 @@ class WorldEntryEditorActivity : AppCompatActivity() {
         // setText() saat load data awal juga memicu watcher; abaikan itu.
         if (!hasLoadedInitialData) return
 
+        // Label detail bisa berubah saat kategori diubah.
+        applyDetailHints(binding.acEntryCategory.text.toString())
         isDirty = true
         persistDraftLocally()
         scheduleAutoSave()
@@ -156,7 +200,10 @@ class WorldEntryEditorActivity : AppCompatActivity() {
                 "name" to binding.etEntryName.text.toString(),
                 "category" to binding.acEntryCategory.text.toString(),
                 "description" to binding.etEntryDescription.text.toString(),
-                "tags" to binding.etEntryTags.text.toString()
+                "tags" to binding.etEntryTags.text.toString(),
+                "detail_1" to binding.etDetail1.text.toString(),
+                "detail_2" to binding.etDetail2.text.toString(),
+                "detail_3" to binding.etDetail3.text.toString()
             )
         )
     }
@@ -178,6 +225,12 @@ class WorldEntryEditorActivity : AppCompatActivity() {
         val newCategory = binding.acEntryCategory.text.toString().trim()
         val newDescription = binding.etEntryDescription.text.toString().trim()
         val newTags = parseTags(binding.etEntryTags.text.toString())
+        val labels = detailLabels(newCategory)
+        val newDetails = mapOf(
+            labels[0] to binding.etDetail1.text.toString().trim(),
+            labels[1] to binding.etDetail2.text.toString().trim(),
+            labels[2] to binding.etDetail3.text.toString().trim()
+        )
 
         // Nama/kategori kosong tidak boleh dikirim ke Firestore (bisa merusak daftar),
         // tapi draft lokalnya tetap aman.
@@ -187,7 +240,7 @@ class WorldEntryEditorActivity : AppCompatActivity() {
         }
 
         setSaveStatus("Menyimpan...")
-        viewModel.saveEntry(newName, newCategory, newDescription, newTags) { success ->
+        viewModel.saveEntry(newName, newCategory, newDescription, newTags, newDetails) { success ->
             if (success) {
                 // Baru hapus draft lokal setelah server menerima datanya.
                 isDirty = false
@@ -227,7 +280,7 @@ class WorldEntryEditorActivity : AppCompatActivity() {
 
     // Gunakan menu "Simpan" yang sudah ada (menu_editor.xml)
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu_editor, menu)
+        menuInflater.inflate(R.menu.menu_entry_editor, menu)
         return true
     }
 
@@ -252,6 +305,13 @@ class WorldEntryEditorActivity : AppCompatActivity() {
         val newTags = parseTags(binding.etEntryTags.text.toString())
         // -------------------------
 
+        val labels = detailLabels(newCategory)
+        val newDetails = mapOf(
+            labels[0] to binding.etDetail1.text.toString().trim(),
+            labels[1] to binding.etDetail2.text.toString().trim(),
+            labels[2] to binding.etDetail3.text.toString().trim()
+        )
+
         if (newName.isEmpty() || newCategory.isEmpty()) {
             Toast.makeText(this, "Nama dan Kategori wajib diisi", Toast.LENGTH_SHORT).show()
             return
@@ -260,7 +320,7 @@ class WorldEntryEditorActivity : AppCompatActivity() {
         // Amankan dulu ke perangkat, baru kirim ke server.
         persistDraftLocally()
 
-        viewModel.saveEntry(newName, newCategory, newDescription, newTags) { success ->
+        viewModel.saveEntry(newName, newCategory, newDescription, newTags, newDetails) { success ->
             if (success) {
                 isDirty = false
                 currentEntryId?.let { draftStore.clear(it) }

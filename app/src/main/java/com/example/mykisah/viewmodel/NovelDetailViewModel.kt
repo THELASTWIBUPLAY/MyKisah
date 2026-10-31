@@ -56,6 +56,13 @@ class NovelDetailViewModel : ViewModel() {
         }
     }
 
+    /** Atur target jumlah kata untuk novel ini. */
+    fun setWordGoal(novelId: String, goal: Int) {
+        viewModelScope.launch {
+            repository.updateNovelWordGoal(novelId, goal)
+        }
+    }
+
     fun deleteChapter(chapterId: String) {
         viewModelScope.launch {
             repository.deleteChapter(chapterId)

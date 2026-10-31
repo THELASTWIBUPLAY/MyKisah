@@ -56,6 +56,23 @@
                         android:text="Ini adalah tempat untuk sinopsis novel yang panjang..."
                         android:textAppearance="?attr/textAppearanceBody2" />
 
+                    <TextView
+                        android:id="@+id/tv_word_progress"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:textAppearance="?attr/textAppearanceBody2"
+                        android:textStyle="bold"
+                        tools:text="12.340 kata · target 50.000 (25%)" />
+
+                    <ProgressBar
+                        android:id="@+id/pb_word_progress"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:max="100" />
+
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_open_wiki" style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                         android:layout_width="wrap_content"

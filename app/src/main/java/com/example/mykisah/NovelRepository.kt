@@ -114,6 +114,16 @@ class NovelRepository(
         }
     }
 
+    suspend fun updateNovelWordGoal(novelId: String, goal: Int): Boolean {
+        return try {
+            novelCollection.document(novelId).update("wordGoal", goal).await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Gagal menyimpan target kata $novelId", e)
+            false
+        }
+    }
+
     suspend fun updateNovel(novelId: String, newTitle: String, newSynopsis: String) {
         try { novelCollection.document(novelId).update(mapOf("title" to newTitle, "synopsis" to newSynopsis)).await() }
         catch (e: Exception) { e.printStackTrace() }
@@ -160,7 +170,8 @@ class NovelRepository(
         newName: String,
         newCategory: String,
         newDescription: String,
-        newTags: List<String>
+        newTags: List<String>,
+        newDetails: Map<String, String> = emptyMap()
     ): Boolean {
         return try {
             worldEntryCollection.document(entryId)
@@ -170,6 +181,7 @@ class NovelRepository(
                         "category" to newCategory,
                         "description" to newDescription,
                         "tags" to newTags, // <-- Simpan list of tags
+                        "details" to newDetails, // <-- Field terstruktur per kategori
                         "updatedAt" to System.currentTimeMillis()
                     )
                 ).await()

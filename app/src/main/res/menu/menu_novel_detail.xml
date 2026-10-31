@@ -7,4 +7,14 @@
         android:title="Pengaturan Novel"
         android:icon="@drawable/ic_baseline_settings_24"
         app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_export"
+        android:title="Bagikan / Ekspor"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_word_goal"
+        android:title="Target Kata"
+        app:showAsAction="never" />
 </menu>
