@@ -19,6 +19,7 @@ data class WorldEntry(
     // Field terstruktur yang menyesuaikan kategori (mis. Peran/Usia untuk Karakter).
     // Disimpan sebagai peta label -> nilai.
     val details: Map<String, String> = emptyMap(),
+    val imageUrl: String = "", // URL gambar entri (opsional)
 
     val timestamp: Long = System.currentTimeMillis(),
     var userId: String = "", // Pemilik entri

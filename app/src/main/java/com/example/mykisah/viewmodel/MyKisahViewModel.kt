@@ -52,11 +52,12 @@ class MyKisahViewModel : ViewModel() {
     /**
      * Fungsi untuk memicu penambahan novel baru
      */
-    fun addNovel(title: String, synopsis: String) {
+    fun addNovel(title: String, synopsis: String, coverUrl: String = "") {
         viewModelScope.launch {
             val newNovel = MyNovel(
                 title = title,
                 synopsis = synopsis,
+                coverUrl = coverUrl,
                 timestamp = System.currentTimeMillis()
             )
             repository.addNovel(newNovel)

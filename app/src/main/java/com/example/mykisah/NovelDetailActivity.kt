@@ -6,6 +6,7 @@ import android.text.InputType
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.Toast
@@ -16,7 +17,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mykisah.adapter.ChapterAdapter
 import com.example.mykisah.databinding.ActivityNovelDetailBinding // Gunakan binding ini
 import com.example.mykisah.databinding.DialogAddChapterBinding
+import com.example.mykisah.util.WordCounter
 import com.example.mykisah.viewmodel.NovelDetailViewModel
+import coil.load
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -126,6 +129,14 @@ class NovelDetailActivity : AppCompatActivity() {
                 binding.tvNovelSynopsis.text = novel?.synopsis ?: "Memuat sinopsis..."
                 currentWordGoal = novel?.wordGoal ?: 0
                 updateWordProgress()
+
+                val coverUrl = novel?.coverUrl.orEmpty()
+                if (coverUrl.isNotBlank()) {
+                    binding.ivNovelCover.visibility = View.VISIBLE
+                    binding.ivNovelCover.load(coverUrl)
+                } else {
+                    binding.ivNovelCover.visibility = View.GONE
+                }
             }
         }
 
@@ -155,11 +166,7 @@ class NovelDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun countWords(text: String): Int {
-        // Buang markup @[Nama] sebelum menghitung kata
-        val plain = text.replace("@[", " ").replace("]", " ")
-        return plain.split(' ', '\n', '\r', '\t').count { it.isNotBlank() }
-    }
+    private fun countWords(text: String): Int = WordCounter.count(text)
 
     private fun formatNumber(value: Int): String = "%,d".format(value)
 

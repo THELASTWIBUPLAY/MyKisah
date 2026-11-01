@@ -22,9 +22,10 @@ class AddNovelActivity : AppCompatActivity() {
         binding.btnSaveNovel.setOnClickListener {
             val title = binding.etTitle.text.toString().trim()
             val synopsis = binding.etSynopsis.text.toString().trim()
+            val coverUrl = binding.etCoverUrl.text.toString().trim()
 
             if (title.isNotEmpty() && synopsis.isNotEmpty()) {
-                viewModel.addNovel(title, synopsis)
+                viewModel.addNovel(title, synopsis, coverUrl)
                 Toast.makeText(this, "Novel disimpan!", Toast.LENGTH_SHORT).show()
                 finish() // Tutup activity dan kembali ke list
             } else {

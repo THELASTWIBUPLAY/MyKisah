@@ -6,5 +6,6 @@ data class MyNovel(
     val synopsis: String = "",
     val timestamp: Long = System.currentTimeMillis(),
     var userId: String = "", // Pemilik novel (UID pengguna yang login)
-    val wordGoal: Int = 0 // Target jumlah kata (0 = belum diatur)
+    val wordGoal: Int = 0, // Target jumlah kata (0 = belum diatur)
+    val coverUrl: String = "" // URL gambar sampul novel (opsional)
 )

@@ -38,6 +38,18 @@
             android:lines="5" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_cover_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="URL Cover (opsional)" />
+    </com.google.android.material.textfield.TextInputLayout>
+
     <Button
         android:id="@+id/btn_save_novel"
         android:layout_width="match_parent"
