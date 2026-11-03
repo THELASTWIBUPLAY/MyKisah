@@ -78,6 +78,13 @@ app/src/main/java/com/example/mykisah/
 - **Security rules Firestore** tidak diatur lewat repo (dikelola di Firebase Console). Pastikan rules dikonfigurasi agar tiap user hanya bisa membaca/menulis dokumen miliknya (`request.auth.uid == resource.data.userId`).
 - Data lama yang belum punya `userId` di-backfill otomatis saat aplikasi dibuka.
 
+## Roadmap / Selanjutnya
+
+- Tampilkan gambar entri wiki di quick-peek + field URL gambar di editor entri.
+- Pagination (`limit` / infinite scroll) untuk koleksi yang besar.
+- Versi riwayat (snapshot) per bab untuk undo di tingkat cloud.
+- Ekspor/import penuh novel dalam satu file.
+
 ## Lisensi
 
 Belum ditentukan.
