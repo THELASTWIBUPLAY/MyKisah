@@ -51,6 +51,7 @@ class WorldEntryEditorViewModel : ViewModel() {
         newDescription: String,
         newTags: List<String>,
         newDetails: Map<String, String> = emptyMap(),
+        newImageUrl: String = "",
         onResult: ((Boolean) -> Unit)? = null
     ) {
         val entryId = currentEntryId
@@ -66,7 +67,8 @@ class WorldEntryEditorViewModel : ViewModel() {
                 newCategory,
                 newDescription,
                 newTags,
-                newDetails
+                newDetails,
+                newImageUrl
             )
             onResult?.invoke(success)
         }

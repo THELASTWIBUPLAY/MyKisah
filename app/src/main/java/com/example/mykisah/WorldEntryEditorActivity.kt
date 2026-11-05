@@ -100,12 +100,15 @@ class WorldEntryEditorActivity : AppCompatActivity() {
                         )
                     }
 
+                    val imageUrl = draft?.get("image") ?: entry.imageUrl
+
                     loadEntryData(
                         name = name,
                         category = category,
                         description = description,
                         tagsString = tags,
-                        detailValues = detailValues
+                        detailValues = detailValues,
+                        imageUrl = imageUrl
                     )
                     hasLoadedInitialData = true
 
@@ -127,7 +130,8 @@ class WorldEntryEditorActivity : AppCompatActivity() {
         category: String,
         description: String,
         tagsString: String,
-        detailValues: List<String>
+        detailValues: List<String>,
+        imageUrl: String
     ) {
         binding.etEntryName.setText(name)
         binding.acEntryCategory.setText(category, false) // 'false' agar tidak memicu filter
@@ -135,6 +139,7 @@ class WorldEntryEditorActivity : AppCompatActivity() {
         binding.etDetail1.setText(detailValues.getOrElse(0) { "" })
         binding.etDetail2.setText(detailValues.getOrElse(1) { "" })
         binding.etDetail3.setText(detailValues.getOrElse(2) { "" })
+        binding.etEntryImage.setText(imageUrl)
         binding.etEntryDescription.setText(description)
         binding.etEntryTags.setText(tagsString)
         binding.toolbar.title = name
@@ -175,6 +180,7 @@ class WorldEntryEditorActivity : AppCompatActivity() {
         binding.etDetail1.addTextChangedListener(watcher)
         binding.etDetail2.addTextChangedListener(watcher)
         binding.etDetail3.addTextChangedListener(watcher)
+        binding.etEntryImage.addTextChangedListener(watcher)
     }
 
     /** Satu titik masuk untuk semua perubahan dari user. */
@@ -203,7 +209,8 @@ class WorldEntryEditorActivity : AppCompatActivity() {
                 "tags" to binding.etEntryTags.text.toString(),
                 "detail_1" to binding.etDetail1.text.toString(),
                 "detail_2" to binding.etDetail2.text.toString(),
-                "detail_3" to binding.etDetail3.text.toString()
+                "detail_3" to binding.etDetail3.text.toString(),
+                "image" to binding.etEntryImage.text.toString()
             )
         )
     }
@@ -231,6 +238,7 @@ class WorldEntryEditorActivity : AppCompatActivity() {
             labels[1] to binding.etDetail2.text.toString().trim(),
             labels[2] to binding.etDetail3.text.toString().trim()
         )
+        val newImageUrl = binding.etEntryImage.text.toString().trim()
 
         // Nama/kategori kosong tidak boleh dikirim ke Firestore (bisa merusak daftar),
         // tapi draft lokalnya tetap aman.
@@ -240,7 +248,7 @@ class WorldEntryEditorActivity : AppCompatActivity() {
         }
 
         setSaveStatus("Menyimpan...")
-        viewModel.saveEntry(newName, newCategory, newDescription, newTags, newDetails) { success ->
+        viewModel.saveEntry(newName, newCategory, newDescription, newTags, newDetails, newImageUrl) { success ->
             if (success) {
                 // Baru hapus draft lokal setelah server menerima datanya.
                 isDirty = false
@@ -311,6 +319,7 @@ class WorldEntryEditorActivity : AppCompatActivity() {
             labels[1] to binding.etDetail2.text.toString().trim(),
             labels[2] to binding.etDetail3.text.toString().trim()
         )
+        val newImageUrl = binding.etEntryImage.text.toString().trim()
 
         if (newName.isEmpty() || newCategory.isEmpty()) {
             Toast.makeText(this, "Nama dan Kategori wajib diisi", Toast.LENGTH_SHORT).show()
@@ -320,7 +329,7 @@ class WorldEntryEditorActivity : AppCompatActivity() {
         // Amankan dulu ke perangkat, baru kirim ke server.
         persistDraftLocally()
 
-        viewModel.saveEntry(newName, newCategory, newDescription, newTags, newDetails) { success ->
+        viewModel.saveEntry(newName, newCategory, newDescription, newTags, newDetails, newImageUrl) { success ->
             if (success) {
                 isDirty = false
                 currentEntryId?.let { draftStore.clear(it) }

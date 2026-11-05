@@ -171,7 +171,8 @@ class NovelRepository(
         newCategory: String,
         newDescription: String,
         newTags: List<String>,
-        newDetails: Map<String, String> = emptyMap()
+        newDetails: Map<String, String> = emptyMap(),
+        newImageUrl: String = ""
     ): Boolean {
         return try {
             worldEntryCollection.document(entryId)
@@ -182,6 +183,7 @@ class NovelRepository(
                         "description" to newDescription,
                         "tags" to newTags, // <-- Simpan list of tags
                         "details" to newDetails, // <-- Field terstruktur per kategori
+                        "imageUrl" to newImageUrl,
                         "updatedAt" to System.currentTimeMillis()
                     )
                 ).await()

@@ -7,6 +7,15 @@
     android:orientation="vertical"
     android:padding="24dp">
 
+    <ImageView
+        android:id="@+id/iv_peek_image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:contentDescription="Gambar entri" />
+
     <TextView
         android:id="@+id/tv_peek_name"
         android:layout_width="match_parent"

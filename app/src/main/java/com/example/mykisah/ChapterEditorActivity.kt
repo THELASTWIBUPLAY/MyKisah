@@ -15,6 +15,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -26,6 +27,7 @@ import com.example.mykisah.repository.DraftStore
 import com.example.mykisah.viewmodel.ChapterEditorViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import coil.load
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -164,6 +166,14 @@ class ChapterEditorActivity : AppCompatActivity() {
         val peekView = layoutInflater.inflate(R.layout.view_wiki_peek, null)
         peekView.findViewById<TextView>(R.id.tv_peek_name).text = entry.name
         peekView.findViewById<TextView>(R.id.tv_peek_category).text = entry.category
+        val imageView = peekView.findViewById<ImageView>(R.id.iv_peek_image)
+        val imageUrl = entry.imageUrl.orEmpty()
+        if (imageUrl.isNotBlank()) {
+            imageView.visibility = View.VISIBLE
+            imageView.load(imageUrl)
+        } else {
+            imageView.visibility = View.GONE
+        }
         peekView.findViewById<TextView>(R.id.tv_peek_mentions).text = mentionLabel(entry.name)
         peekView.findViewById<TextView>(R.id.tv_peek_description).text =
             entry.description.ifBlank { "Belum ada deskripsi." }
