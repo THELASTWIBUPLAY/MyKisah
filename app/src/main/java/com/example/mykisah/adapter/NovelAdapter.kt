@@ -1,12 +1,14 @@
 package com.example.mykisah.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mykisah.databinding.ItemMykisahBinding
 import com.example.mykisah.entity.MyNovel
+import coil.load
 
 // 1. Tambahkan parameter lambda di constructor
 class NovelAdapter(
@@ -20,6 +22,14 @@ class NovelAdapter(
         fun bind(novel: MyNovel) {
             binding.title.text = novel.title
             binding.description.text = novel.synopsis
+
+            val cover = novel.coverUrl.orEmpty()
+            if (cover.isNotBlank()) {
+                binding.ivNovelThumb.visibility = View.VISIBLE
+                binding.ivNovelThumb.load(cover)
+            } else {
+                binding.ivNovelThumb.visibility = View.GONE
+            }
         }
     }
 
