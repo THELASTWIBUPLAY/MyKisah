@@ -55,6 +55,7 @@ class ChapterEditorActivity : AppCompatActivity() {
 
     // --- Auto-save state ---
     private var autoSaveJob: Job? = null
+    private var localRefreshJob: Job? = null
     private var isDirty = false // ada perubahan yang belum tersimpan?
     private var isFormatting = false // sedang menyorot tag wiki?
     private var isPreviewing = false // sedang melihat pratinjau baca?
@@ -206,6 +207,7 @@ class ChapterEditorActivity : AppCompatActivity() {
                     binding.toolbar.title = title
                     hasLoadedInitialData = true
                     currentStatus = chapter.status
+                    updateWordCount()
 
                     if (draft != null) {
                         // Ada ketikan yang belum sampai ke Firestore: tampilkan dan kirim ulang.
@@ -245,13 +247,8 @@ class ChapterEditorActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {
                 if (s == null || isFormatting) return
 
-                updateWordCount()
-
-                // Catatan: listener TIDAK dilepas-pasang lagi. Dulu listener dilepas lalu
-                // dipasang lagi di akhir fungsi; kalau salah satu langkah di tengah melempar
-                // exception, listener tidak pernah terpasang kembali sehingga auto-save
-                // mati diam-diam sampai editor ditutup.
-                applyHighlight(s)
+                // Kerja berat (highlight, word count, draft) di-debounce di onUserEdited,
+                // bukan dijalankan setiap ketukan, supaya editor tetap ringan.
                 showMentionDialogIfNeeded(s)
                 onUserEdited()
             }
@@ -264,8 +261,24 @@ class ChapterEditorActivity : AppCompatActivity() {
         if (!hasLoadedInitialData) return
 
         isDirty = true
-        persistDraftLocally()
         scheduleAutoSave()
+        scheduleLocalRefresh()
+    }
+
+    /** Jadwalkan kerja lokal yang agak berat (draft, word count, highlight) agar tidak
+     *  berjalan setiap ketukan — cukup setelah berhenti mengetik sejenak. */
+    private fun scheduleLocalRefresh() {
+        localRefreshJob?.cancel()
+        localRefreshJob = lifecycleScope.launch {
+            delay(LOCAL_REFRESH_DEBOUNCE_MS)
+            refreshLocalState()
+        }
+    }
+
+    private fun refreshLocalState() {
+        persistDraftLocally()
+        updateWordCount()
+        applyHighlight(binding.etChapterContent.editableText)
     }
 
     /** Simpan draft ke perangkat lebih dulu, tanpa menunggu jaringan. */
@@ -321,7 +334,10 @@ class ChapterEditorActivity : AppCompatActivity() {
 
     private fun flushPendingSave() {
         autoSaveJob?.cancel()
+        localRefreshJob?.cancel()
         if (isDirty) {
+            // Simpan draft + hitung kata + sorot lebih dulu, baru kirim ke server.
+            refreshLocalState()
             performAutoSave()
         }
     }
@@ -664,6 +680,7 @@ class ChapterEditorActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_CHAPTER_ID = "EXTRA_CHAPTER_ID"
         private const val AUTO_SAVE_DEBOUNCE_MS = 800L
+        private const val LOCAL_REFRESH_DEBOUNCE_MS = 300L
         private const val READING_WPM = 200
         private const val TAG = "ChapterEditor"
     }

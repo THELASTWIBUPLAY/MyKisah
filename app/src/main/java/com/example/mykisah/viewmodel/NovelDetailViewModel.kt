@@ -22,10 +22,16 @@ class NovelDetailViewModel : ViewModel() {
     private val _chapters = MutableStateFlow<List<MyChapter>>(emptyList())
     val chapters: StateFlow<List<MyChapter>> = _chapters.asStateFlow()
 
+    // Cegah pemasangan listener Firestore ganda saat Activity dibuat ulang (mis. rotasi).
+    private var loadedNovelId: String? = null
+
     /**
      * Dipanggil oleh Activity untuk mulai mengambil data
      */
     fun loadData(novelId: String) {
+        if (loadedNovelId == novelId) return
+        loadedNovelId = novelId
+
         // Ambil detail novel
         viewModelScope.launch {
             repository.getNovelDetails(novelId).collect { novel ->
