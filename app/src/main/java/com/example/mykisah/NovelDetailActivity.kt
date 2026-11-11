@@ -12,7 +12,9 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mykisah.adapter.ChapterAdapter
 import com.example.mykisah.databinding.ActivityNovelDetailBinding // Gunakan binding ini
@@ -123,29 +125,31 @@ class NovelDetailActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
-        // Amati perubahan detail novel (untuk sinopsis)
         lifecycleScope.launch {
-            viewModel.novelDetails.collectLatest { novel ->
-                binding.tvNovelSynopsis.text = novel?.synopsis ?: "Memuat sinopsis..."
-                currentWordGoal = novel?.wordGoal ?: 0
-                updateWordProgress()
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.novelDetails.collectLatest { novel ->
+                        binding.tvNovelSynopsis.text = novel?.synopsis ?: "Memuat sinopsis..."
+                        currentWordGoal = novel?.wordGoal ?: 0
+                        updateWordProgress()
 
-                val coverUrl = novel?.coverUrl.orEmpty()
-                if (coverUrl.isNotBlank()) {
-                    binding.ivNovelCover.visibility = View.VISIBLE
-                    binding.ivNovelCover.load(coverUrl)
-                } else {
-                    binding.ivNovelCover.visibility = View.GONE
+                        val coverUrl = novel?.coverUrl.orEmpty()
+                        if (coverUrl.isNotBlank()) {
+                            binding.ivNovelCover.visibility = View.VISIBLE
+                            binding.ivNovelCover.load(coverUrl)
+                        } else {
+                            binding.ivNovelCover.visibility = View.GONE
+                        }
+                    }
                 }
-            }
-        }
 
-        // Amati perubahan daftar chapter
-        lifecycleScope.launch {
-            viewModel.chapters.collectLatest { chapters ->
-                chapterAdapter.submitList(chapters)
-                chaptersSnapshot = chapters
-                updateWordProgress()
+                launch {
+                    viewModel.chapters.collectLatest { chapters ->
+                        chapterAdapter.submitList(chapters)
+                        chaptersSnapshot = chapters
+                        updateWordProgress()
+                    }
+                }
             }
         }
     }

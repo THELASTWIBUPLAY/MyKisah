@@ -10,7 +10,9 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mykisah.adapter.WorldEntryAdapter
 import com.example.mykisah.databinding.ActivityWorldBrowserBinding
@@ -93,30 +95,27 @@ class WorldBrowserActivity : AppCompatActivity(), SearchView.OnQueryTextListener
     }
 
     private fun observeViewModel() {
-        // Amati daftar entri yang sudah difilter
         lifecycleScope.launch {
-            viewModel.filteredEntries.collectLatest { entries ->
-                worldEntryAdapter.submitList(entries)
-            }
-        }
-
-        // Amati daftar kategori untuk me-refresh Tab
-        lifecycleScope.launch {
-            viewModel.categories.collectLatest { categories ->
-                // Simpan tab yang sedang dipilih
-                val selectedTab = binding.tabLayout.getTabAt(binding.tabLayout.selectedTabPosition)
-
-                binding.tabLayout.removeAllTabs()
-                var newTabIndex = 0
-                categories.forEachIndexed { index, category ->
-                    val tab = binding.tabLayout.newTab().setText(category)
-                    binding.tabLayout.addTab(tab)
-                    // Pilih kembali tab yang tadi aktif
-                    if (category == selectedTab?.text) {
-                        newTabIndex = index
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.filteredEntries.collectLatest { entries ->
+                        worldEntryAdapter.submitList(entries)
                     }
                 }
-                binding.tabLayout.getTabAt(newTabIndex)?.select()
+
+                launch {
+                    viewModel.categories.collectLatest { categories ->
+                        val selectedTab = binding.tabLayout.getTabAt(binding.tabLayout.selectedTabPosition)
+                        binding.tabLayout.removeAllTabs()
+                        var newTabIndex = 0
+                        categories.forEachIndexed { index, category ->
+                            val tab = binding.tabLayout.newTab().setText(category)
+                            binding.tabLayout.addTab(tab)
+                            if (category == selectedTab?.text) newTabIndex = index
+                        }
+                        binding.tabLayout.getTabAt(newTabIndex)?.select()
+                    }
+                }
             }
         }
     }

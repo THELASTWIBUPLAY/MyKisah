@@ -11,7 +11,9 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView // <-- 2. IMPORT INI
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mykisah.adapter.NovelAdapter
 import com.example.mykisah.databinding.HomepageMykisahBinding
@@ -85,9 +87,11 @@ class MyKisahActivity : AppCompatActivity(), SearchView.OnQueryTextListener {
 
     private fun observeNovels() {
         lifecycleScope.launch {
-            // 5. UBAH INI: Amati 'filteredNovels', BUKAN 'allNovels'
-            viewModel.filteredNovels.collectLatest { novelList ->
-                novelAdapter.submitList(novelList)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // 5. UBAH INI: Amati 'filteredNovels', BUKAN 'allNovels'
+                viewModel.filteredNovels.collectLatest { novelList ->
+                    novelAdapter.submitList(novelList)
+                }
             }
         }
     }

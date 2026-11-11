@@ -7,7 +7,9 @@ import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.mykisah.databinding.ActivityNovelSettingsBinding
 import com.example.mykisah.viewmodel.NovelSettingsViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -56,11 +58,13 @@ class NovelSettingsActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.novelDetails.collectLatest { novel ->
-                if (novel != null && !hasLoadedInitialData) {
-                    binding.etNovelTitle.setText(novel.title)
-                    binding.etNovelSynopsis.setText(novel.synopsis)
-                    hasLoadedInitialData = true
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.novelDetails.collectLatest { novel ->
+                    if (novel != null && !hasLoadedInitialData) {
+                        binding.etNovelTitle.setText(novel.title)
+                        binding.etNovelSynopsis.setText(novel.synopsis)
+                        hasLoadedInitialData = true
+                    }
                 }
             }
         }

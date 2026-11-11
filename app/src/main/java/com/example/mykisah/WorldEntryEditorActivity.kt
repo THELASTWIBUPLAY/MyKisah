@@ -9,7 +9,9 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.mykisah.databinding.ActivityWorldEntryEditorBinding
 import com.example.mykisah.entity.WorldEntry
 import com.example.mykisah.repository.DraftStore
@@ -75,7 +77,8 @@ class WorldEntryEditorActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.entryDetails.collectLatest { entry ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.entryDetails.collectLatest { entry ->
                 if (entry != null && !hasLoadedInitialData) {
                     val entryId = currentEntryId ?: return@collectLatest
 
@@ -121,6 +124,7 @@ class WorldEntryEditorActivity : AppCompatActivity() {
                         setSaveStatus("Tersimpan")
                     }
                 }
+            }
             }
         }
     }

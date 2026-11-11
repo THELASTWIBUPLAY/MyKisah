@@ -20,7 +20,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.mykisah.databinding.ActivityChapterEditorBinding
 import com.example.mykisah.entity.WorldEntry
 import com.example.mykisah.repository.DraftStore
@@ -193,7 +195,8 @@ class ChapterEditorActivity : AppCompatActivity() {
     // (Kita perlu memanggil highlight saat data pertama kali dimuat)
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.chapterDetails.collectLatest { chapter ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.chapterDetails.collectLatest { chapter ->
                 if (chapter != null && !hasLoadedInitialData) {
                     val chapterId = currentChapterId ?: return@collectLatest
 
@@ -224,6 +227,7 @@ class ChapterEditorActivity : AppCompatActivity() {
                         applyHighlight(binding.etChapterContent.editableText)
                     }, 100)
                 }
+            }
             }
         }
     }

@@ -29,6 +29,7 @@ class NovelRepository(
     fun getAllNovels(): Flow<List<MyNovel>> {
         return novelCollection
             .whereEqualTo("userId", userId)
+            .limit(500)
             .snapshots() // <-- KTX Flow
             .map { querySnapshot ->
                 // Sortir di sisi klien: kombinasi whereEqualTo + orderBy memerlukan
@@ -51,6 +52,7 @@ class NovelRepository(
         return chapterCollection
             .whereEqualTo("novelId", novelId)
             .orderBy("timestamp", Query.Direction.ASCENDING)
+            .limit(500)
             .snapshots() // <-- KTX Flow
             .map { querySnapshot ->
                 querySnapshot.documents.mapNotNull { document ->
@@ -72,6 +74,7 @@ class NovelRepository(
         return worldEntryCollection
             .whereEqualTo("novelId", novelId)
             .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(500)
             .snapshots()
             .map { querySnapshot ->
                 querySnapshot.documents.mapNotNull { document ->
