@@ -4,7 +4,7 @@ MyKisah adalah aplikasi Android untuk para penulis cerita/novel. Selain menulis 
 
 Dibangun dengan Kotlin + Firebase, berfokus pada kenyamanan menulis di HP: autosave, draft lokal, mode baca, word count, dan navigasi bab.
 
-## Fitur Utama
+## Fitur Utama MyKisah
 
 ### Menulis
 - **Auto-save** dengan debounce — cerita disimpan otomatis saat berhenti mengetik.
